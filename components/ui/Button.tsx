@@ -1,21 +1,20 @@
-import { forwardRef } from "react"
-import { cn } from "@/lib/utils"
-import { Autour_One } from "next/font/google"
+import { forwardRef } from "react";
+import { cn } from "@/lib/utils";
 
 export interface ButtonProps 
     extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
 
-const Button = forwardRef <HTMLButtonElement, ButtonProps>(({
-    
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     className,
     children,
     disabled,
     type = "button",
     ...props
 }, ref) => (
-    <button ref={ref}
+    <button 
+        ref={ref}
         className={cn(
-           `w-auto 
+            `w-auto 
             rounded-full
             bg-black 
             border-transparent 
@@ -26,16 +25,15 @@ const Button = forwardRef <HTMLButtonElement, ButtonProps>(({
             text-white
             font-semibold
             hover:opacity-75
-            transition
-
-            `,
+            transition`,
             className
         )}
+        type={type}
+        disabled={disabled}
         {...props}
-        disabled
-        >
+    >
         {children}
     </button>
-))
-Button.displayName = "Button"
-export default Button
+));
+Button.displayName = "Button";
+export default Button;
