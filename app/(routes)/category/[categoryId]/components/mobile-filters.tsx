@@ -45,8 +45,8 @@ const MobileFilters : React.FC<MobileFiltersProps> = ({
             flex-col overflow-y-auto bg-white py-4 pb-6 shadow-xl">
 
                 {/* close button */}
-                <div className="flex items-center justify-end px-4" onClick={onClose}>
-                    <IconButton icon={<X size={15} />} />
+                <div className="flex items-center justify-end px-4" onClick={onClose} >
+                    <IconButton onClick={onClose} icon={<X size={15} />} />
                 </div>
 
                 {/* Render filter */}
