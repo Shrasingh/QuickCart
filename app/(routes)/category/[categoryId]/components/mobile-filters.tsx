@@ -8,6 +8,7 @@ import { Plus, X } from "lucide-react"
 import { Dialog, DialogPanel } from "@headlessui/react"
 import IconButton from "@/components/ui/icon-button"
 import Filter from "./filter"
+import PriceFilter from "@/components/price-filter"
 
 interface MobileFiltersProps {
     sizes : Size[]
@@ -56,11 +57,12 @@ const MobileFilters : React.FC<MobileFiltersProps> = ({
                     name="Sizes"
                     data={sizes}
                             />
-                <Filter 
+                <Filter
                     valueKey="colorId"
                     name="Colors"
                     data={colors}
                   />
+                <PriceFilter />
                 </div>
             </DialogPanel>
             </div>

@@ -19,6 +19,11 @@ export interface Product {
     size : Size
     color : Color
     images : Image[]
+    // Optional, additive product fields (may be null from the API).
+    description? : string | null
+    brand? : string | null
+    originalPrice? : string | null
+    isInStock? : boolean
 }
 
 export interface Image {

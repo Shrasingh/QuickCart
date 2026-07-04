@@ -15,17 +15,14 @@ const Summary = () => {
   
   const searchParams = useSearchParams();
   const items = useCart((state) => state.items);
-  const removeAll = useCart((state) => state.removeAll);
 
     useEffect(() => {
-      if(searchParams.get("success")) {
-        toast.success("Payment completed")
-        removeAll()
-      }
+      // Successful payments are redirected to /order-success (which clears the
+      // cart and shows the confirmation). Here we only handle cancellations.
       if(searchParams.get("canceled")) {
-        toast.error("Payment canceled, Something went wrong")
+        toast.error("Payment canceled. Something went wrong — please try again.")
       }
-    }, [searchParams, removeAll])
+    }, [searchParams])
 
     const totalPrice = items.reduce((total, item) => {
       return total + Number(item.price)

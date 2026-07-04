@@ -1,11 +1,13 @@
 import getProducts from '@/actions/get-products'
 import React from 'react'
+import { notFound } from 'next/navigation'
 import getProduct from '@/actions/get-product'
 import Container from '@/components/ui/container'
 import ProductList from '@/components/product-list'
 import Gallery from '@/components/gallery'
 import Info from '@/components/ui/info'
 
+export const revalidate = 0
 
 interface pageProps {
     params : {
@@ -16,6 +18,11 @@ const page : React.FC<pageProps> = async({
     params
 }) => {
     const product = await getProduct(params.productId)
+
+    if (!product) {
+        notFound()
+    }
+
     const suggestedProducts = await getProducts({
         categoryId : product?.category?.id
     })

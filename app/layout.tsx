@@ -9,9 +9,38 @@ import ToastProvider from "@/providers/toast-provider";
 
 const font = Urbanist({ subsets: ["latin"] });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
+
 export const metadata: Metadata = {
-  title: "QuickCart",
-  description: "QuickCart",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "QuickCart — Modern Online Store",
+    template: "%s | QuickCart",
+  },
+  description:
+    "QuickCart is a fast, modern ecommerce storefront. Browse electronics, fashion, home, books and more with a clean shopping experience.",
+  keywords: [
+    "ecommerce",
+    "online store",
+    "shopping",
+    "electronics",
+    "fashion",
+    "QuickCart",
+  ],
+  openGraph: {
+    title: "QuickCart — Modern Online Store",
+    description:
+      "Browse electronics, fashion, home, books and more with a clean, fast shopping experience.",
+    url: siteUrl,
+    siteName: "QuickCart",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "QuickCart — Modern Online Store",
+    description:
+      "Browse electronics, fashion, home, books and more with a clean, fast shopping experience.",
+  },
 };
 
 export default function RootLayout({

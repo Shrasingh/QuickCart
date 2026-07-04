@@ -9,9 +9,11 @@ interface Query {
     colorId?: string ;
     sizeId? : string;
     isFeatured? : boolean
+    search? : string;
+    minPrice? : string | number;
+    maxPrice? : string | number;
 }
 
-console.log("URL -> ", URL)
 const getProducts = async (query : Query) : Promise<Product[]> => {
     const url = qs.stringifyUrl({
         url : URL,
@@ -20,11 +22,18 @@ const getProducts = async (query : Query) : Promise<Product[]> => {
             sizeId : query.sizeId,
             categoryId : query.categoryId,
             isFeatured : query.isFeatured,
-        }, 
+            search : query.search,
+            minPrice : query.minPrice,
+            maxPrice : query.maxPrice,
+        },
     })
-    const res = await fetch(url);
-    
-    return res.json();
-} 
+    try {
+        const res = await fetch(url);
+        if (!res.ok) return [];
+        return res.json();
+    } catch {
+        return [];
+    }
+}
 
 export default getProducts
