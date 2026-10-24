@@ -41,9 +41,12 @@ const OrderSuccessContent = () => {
     return () => clearTimeout(t)
   }, [seconds, router])
 
-  const deliveryDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString(
-    "en-US",
-    { weekday: "long", month: "long", day: "numeric" }
+  // Computed once on mount so re-renders (the countdown) don't recompute it.
+  const [deliveryDate] = useState(() =>
+    new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString(
+      "en-US",
+      { weekday: "long", month: "long", day: "numeric" }
+    )
   )
 
   return (

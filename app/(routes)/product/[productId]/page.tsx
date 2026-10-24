@@ -10,13 +10,12 @@ import Info from '@/components/ui/info'
 export const revalidate = 0
 
 interface pageProps {
-    params : {
+    params : Promise<{
         productId : string
-    }
+    }>
 }
-const page : React.FC<pageProps> = async({
-    params
-}) => {
+const page : React.FC<pageProps> = async(props) => {
+    const params = await props.params
     const product = await getProduct(params.productId)
 
     if (!product) {

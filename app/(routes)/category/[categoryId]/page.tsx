@@ -14,21 +14,20 @@ import PriceFilter from "@/components/price-filter"
 
 export const revalidate = 0
 interface CategoryProps {
-    params : {
+    params : Promise<{
         categoryId : string
-    },
-    searchParams : {
+    }>,
+    searchParams : Promise<{
         colorId : string
         sizeId : string
         minPrice : string
         maxPrice : string
-    }
+    }>
 }
 
-const CattegoryPage : React.FC<CategoryProps> = async ({
-    params,
-    searchParams
-}) => {
+const CattegoryPage : React.FC<CategoryProps> = async (props) => {
+    const params = await props.params
+    const searchParams = await props.searchParams
  
 
     const products = await getProducts({

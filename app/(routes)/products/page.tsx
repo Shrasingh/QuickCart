@@ -11,16 +11,17 @@ import ProductCard from "@/components/ui/product-card"
 export const revalidate = 0
 
 interface ProductsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     q?: string
     colorId?: string
     sizeId?: string
     minPrice?: string
     maxPrice?: string
-  }
+  }>
 }
 
-const ProductsPage = async ({ searchParams }: ProductsPageProps) => {
+const ProductsPage = async (props: ProductsPageProps) => {
+  const searchParams = await props.searchParams
   const query = searchParams.q?.trim()
 
   const products = await getProducts({

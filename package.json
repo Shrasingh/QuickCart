@@ -6,29 +6,29 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
-    "axios": "^1.18.1",
+    "axios": "^1.20.0",
     "clsx": "^2.1.1",
-    "framer-motion": "^12.42.2",
-    "lucide-react": "^0.379.0",
-    "next": "14.2.35",
-    "query-string": "^9.4.1",
-    "react": "^18",
-    "react-dom": "^18",
-    "react-hot-toast": "^2.6.0",
+    "framer-motion": "^14.6.0",
+    "lucide-react": "^1.61.0",
+    "next": "^16.4.3",
+    "query-string": "^10.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-hot-toast": "^2.6.1",
     "tailwind-merge": "^2.6.1",
-    "zustand": "^4.5.7"
+    "zustand": "^5.0.16"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.35",
-    "postcss": "^8",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.3",
+    "postcss": "^8.5.31",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }
