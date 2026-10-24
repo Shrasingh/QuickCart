@@ -2,6 +2,7 @@ import React from 'react'
 
 import Container from '@/components/ui/container'
 import getBillboard from '@/actions/get-bilboard';
+import getBillboards from '@/actions/get-billboards';
 import getProducts from '@/actions/get-products';
 import Billboard from '@/components/billboard'
 import ProductList from '@/components/product-list';
@@ -10,7 +11,10 @@ export const revalidate = 0;
 
 const HomePage = async () => {
   const products = await getProducts({isFeatured: true})
-  const billboard = await getBillboard("73c8f9b2-0a38-4dda-939e-032cc74d58e9")
+  // Use the configured hero billboard, falling back to the store's first one.
+  const homeBillboardId = process.env.NEXT_PUBLIC_HOME_BILLBOARD_ID
+  const billboard = (homeBillboardId && await getBillboard(homeBillboardId))
+    || (await getBillboards())[0]
   return (
     <Container>
       <div className='space-y-10 pb-8'>

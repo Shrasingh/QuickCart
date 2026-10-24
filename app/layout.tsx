@@ -9,6 +9,10 @@ import ToastProvider from "@/providers/toast-provider";
 
 const font = Urbanist({ subsets: ["latin"] });
 
+// The Navbar fetches categories from the admin API; render on every request so
+// pages like /cart don't freeze the categories that existed at build time.
+export const revalidate = 0;
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
 
 export const metadata: Metadata = {

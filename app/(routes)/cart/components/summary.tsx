@@ -29,11 +29,16 @@ const Summary = () => {
     }, 0)
   
     const onCheckout = async () => {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/checkout` , {
-        productIds : items.map((item) => item.id)
-      })
+      try {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/checkout` , {
+          productIds : items.map((item) => item.id)
+        })
 
-      window.location = response.data.url;
+        window.location = response.data.url;
+      } catch (error) {
+        // e.g. 400 when every item in the cart has already been sold.
+        toast.error("Checkout failed. Some items may no longer be available.")
+      }
     }
 
   return (
