@@ -1,6 +1,6 @@
 # QuickCart — Storefront
 
-A fast, modern **customer-facing ecommerce storefront** built with Next.js 14 (App Router). Browse products by category, filter by size and color, preview products in a modal, manage a persistent cart, and check out with Stripe.
+A fast, modern **customer-facing ecommerce storefront** built with Next.js 16 (App Router). Browse products by category, filter by size and color, preview products in a modal, manage a persistent cart, and check out with Stripe.
 
 > QuickCart is the **frontend** of a two-app system. It has no database of its own — it reads products, categories, sizes, colors and billboards from the [EcommerceCloud](../EcommerceCloud) admin API, and posts checkouts to it.
 
@@ -19,7 +19,7 @@ A fast, modern **customer-facing ecommerce storefront** built with Next.js 14 (A
 
 | Layer | Tech |
 |---|---|
-| Framework | Next.js 14 (App Router), React 18, TypeScript |
+| Framework | Next.js 16 (App Router), React 19, TypeScript |
 | Styling | Tailwind CSS |
 | UI | @headlessui/react, lucide-react |
 | State | zustand (+ persist) |
@@ -77,6 +77,7 @@ Run the admin on port 3000 and QuickCart on 3001 so the Stripe redirect URLs lin
 1. Push to GitHub and import the repo into [Vercel](https://vercel.com).
 2. Add `NEXT_PUBLIC_API_URL` (pointing at your **deployed** admin, e.g. `https://your-admin.vercel.app/api/<storeId>`).
 3. Optionally set `NEXT_PUBLIC_SITE_URL` to the deployed storefront URL (used for Open Graph metadata).
+   Optionally set `NEXT_PUBLIC_HOME_BILLBOARD_ID` to the hero billboard id (printed by the admin seed); otherwise the first billboard is shown.
 4. Deploy. Ensure the admin's `FRONTEND_STORE_URL` points back at this storefront's URL.
 
 ## 🖼️ Images
