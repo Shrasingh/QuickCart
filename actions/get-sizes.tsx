@@ -1,15 +1,7 @@
-import { Size} from "@/type";
+import { Size } from "@/type";
+import { apiGet } from "@/lib/api";
 
-const URL = `${process.env.NEXT_PUBLIC_API_URL}/sizes`;
-
-const getSizes= async () : Promise<Size[]> => {
-    try {
-        const res = await fetch(URL);
-        if (!res.ok) return [];
-        return res.json();
-    } catch {
-        return [];
-    }
-}
+const getSizes = async (): Promise<Size[]> =>
+  apiGet<Size[]>("/sizes", []);
 
 export default getSizes

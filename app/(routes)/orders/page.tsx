@@ -1,20 +1,17 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ClipboardList } from "lucide-react"
 import Container from "@/components/ui/container"
 import useOrders from "@/hooks/use-orders"
+import useHydrated from "@/hooks/use-hydrated"
 
 const OrdersPage = () => {
   const orders = useOrders((state) => state.orders)
-  const [isMounted, setIsMounted] = useState(false)
+  const hydrated = useHydrated()
 
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  if (!isMounted) return null
+  // Orders are stored in localStorage; render them only after hydration.
+  if (!hydrated) return null
 
   return (
     <Container>
@@ -61,8 +58,8 @@ const OrdersPage = () => {
                     })}
                   </p>
                 </div>
-                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-                  Confirmed
+                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                  Processing
                 </span>
               </li>
             ))}

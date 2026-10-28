@@ -24,16 +24,18 @@ const ProductsPage = async (props: ProductsPageProps) => {
   const searchParams = await props.searchParams
   const query = searchParams.q?.trim()
 
-  const products = await getProducts({
-    search: query,
-    colorId: searchParams.colorId,
-    sizeId: searchParams.sizeId,
-    minPrice: searchParams.minPrice,
-    maxPrice: searchParams.maxPrice,
-  })
-
-  const sizes = await getSizes()
-  const colors = await getColors()
+  // Independent requests, issued together (see category page).
+  const [products, sizes, colors] = await Promise.all([
+    getProducts({
+      search: query,
+      colorId: searchParams.colorId,
+      sizeId: searchParams.sizeId,
+      minPrice: searchParams.minPrice,
+      maxPrice: searchParams.maxPrice,
+    }),
+    getSizes(),
+    getColors(),
+  ])
 
   return (
     <div className="bg-white">

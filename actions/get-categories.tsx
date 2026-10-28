@@ -1,15 +1,7 @@
 import { Category } from "@/type";
+import { apiGet } from "@/lib/api";
 
-const URL = `${process.env.NEXT_PUBLIC_API_URL}/categories`;
-
-const getCategories = async () : Promise<Category[]> => {
-    try {
-        const res = await fetch(URL);
-        if (!res.ok) return [];
-        return res.json();
-    } catch {
-        return [];
-    }
-}
+const getCategories = async (): Promise<Category[]> =>
+  apiGet<Category[]>("/categories", []);
 
 export default getCategories

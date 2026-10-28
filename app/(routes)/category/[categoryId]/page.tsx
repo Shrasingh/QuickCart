@@ -18,29 +18,31 @@ interface CategoryProps {
         categoryId : string
     }>,
     searchParams : Promise<{
-        colorId : string
-        sizeId : string
-        minPrice : string
-        maxPrice : string
+        colorId? : string
+        sizeId? : string
+        minPrice? : string
+        maxPrice? : string
     }>
 }
 
-const CattegoryPage : React.FC<CategoryProps> = async (props) => {
+const CategoryPage : React.FC<CategoryProps> = async (props) => {
     const params = await props.params
     const searchParams = await props.searchParams
- 
 
-    const products = await getProducts({
-        categoryId : params.categoryId,
-        colorId : searchParams.colorId,
-        sizeId : searchParams.sizeId,
-        minPrice : searchParams.minPrice,
-        maxPrice : searchParams.maxPrice
-    })
-
-    const sizes = await getSizes();
-    const colors = await getColors();
-    const category = await getCategory(params.categoryId);
+    // The four requests are independent, so issue them together: the page
+    // waits for the slowest one instead of the sum of all four.
+    const [category, products, sizes, colors] = await Promise.all([
+        getCategory(params.categoryId),
+        getProducts({
+            categoryId : params.categoryId,
+            colorId : searchParams.colorId,
+            sizeId : searchParams.sizeId,
+            minPrice : searchParams.minPrice,
+            maxPrice : searchParams.maxPrice
+        }),
+        getSizes(),
+        getColors(),
+    ])
 
     if (!category) {
         notFound()
@@ -75,12 +77,12 @@ const CattegoryPage : React.FC<CategoryProps> = async (props) => {
                             {products.length === 0 && <NoResults/>}
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3" >
                                 {products.map((product) => (
-                                    <ProductCard 
-                                        key={product.id} 
-                                        data={product} 
+                                    <ProductCard
+                                        key={product.id}
+                                        data={product}
                                     />
                                 ))}
-                                
+
                             </div>
                         </div>
                     </div>
@@ -90,4 +92,4 @@ const CattegoryPage : React.FC<CategoryProps> = async (props) => {
   )
 }
 
-export default CattegoryPage
+export default CategoryPage

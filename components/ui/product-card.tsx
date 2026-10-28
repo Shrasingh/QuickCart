@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { MouseEventHandler } from "react";
+import { KeyboardEventHandler, MouseEventHandler } from "react";
 
 import IconButton from "./icon-button";
 import Currency from "./currency";
@@ -28,8 +28,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ data }) => {
     : 0;
   const outOfStock = data.isInStock === false;
 
-  const handleClick = () => {
+  const openProduct = () => {
     router.push(`/product/${data?.id}`);
+  };
+
+  // The card contains its own buttons, so it can't be an <a>; expose it as a
+  // keyboard-operable link instead (Enter/Space open the product).
+  const onKeyDown: KeyboardEventHandler<HTMLDivElement> = (event) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openProduct();
+    }
   };
 
   const onPreview: MouseEventHandler<HTMLButtonElement> = (event) => {
@@ -45,8 +55,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ data }) => {
 
   return (
     <div
-      onClick={handleClick}
-      className="bg-white group cursor-pointer rounded-xl border p-3 space-y-4 transition hover:shadow-md"
+      role="link"
+      tabIndex={0}
+      aria-label={`View ${data.name}`}
+      onClick={openProduct}
+      onKeyDown={onKeyDown}
+      className="bg-white group cursor-pointer rounded-xl border p-3 space-y-4 transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
     >
       {/* Images and Actions */}
       <div className="aspect-square rounded-xl bg-gray-100 relative">
@@ -80,14 +94,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ data }) => {
           </div>
         )}
 
-        <div className="opacity-0 group-hover:opacity-100 transition absolute w-full px-6 bottom-3">
+        {/* Revealed on hover, and on keyboard focus of either button. */}
+        <div className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition absolute w-full px-6 bottom-3">
           <div className="flex gap-x-6 justify-center">
             <IconButton
               onClick={onPreview}
+              label={`Quick preview ${data.name}`}
               icon={<Expand size={20} className="text-gray-600" />}
             />
             <IconButton
               onClick={onAddToCart}
+              label={outOfStock ? `${data.name} is out of stock` : `Add ${data.name} to cart`}
+              disabled={outOfStock}
               icon={
                 <ShoppingCart
                   size={20}

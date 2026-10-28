@@ -27,7 +27,7 @@ const OrderSuccessContent = () => {
   useEffect(() => {
     removeAll()
     if (orderId) addOrder(orderId)
-    toast.success("🎉 Order placed successfully! Thank you for shopping with QuickCart.")
+    toast.success("🎉 Order received! Thanks for shopping with QuickCart.")
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -76,10 +76,11 @@ const OrderSuccessContent = () => {
           className="mt-8 space-y-3"
         >
           <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-            Order successfully placed
+            Order received
           </h1>
           <p className="text-lg text-gray-600">
-            Thank you for shopping with QuickCart. Your order has been confirmed.
+            Thanks for shopping with QuickCart. Your order has been received and your
+            payment is being processed.
           </p>
         </motion.div>
 

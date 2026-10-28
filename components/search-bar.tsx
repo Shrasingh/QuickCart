@@ -3,6 +3,7 @@
 import { Search } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState, FormEvent } from "react"
+import { buildSearchUrl } from "@/lib/filters"
 
 const SearchBar = () => {
   const router = useRouter()
@@ -10,8 +11,7 @@ const SearchBar = () => {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
-    const q = value.trim()
-    router.push(q ? `/products?q=${encodeURIComponent(q)}` : "/products")
+    router.push(buildSearchUrl(value))
   }
 
   return (

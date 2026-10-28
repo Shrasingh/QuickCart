@@ -1,4 +1,4 @@
-
+"use client"
 
 import IconButton from '@/components/ui/icon-button'
 import { Product } from '@/type'
@@ -25,13 +25,14 @@ const CartItem : React.FC<CartItemProps> = ({
             <Image
                 src={data.images?.[0]?.url ?? "/placeholder.svg"}
                 fill
+                sizes="(max-width: 640px) 96px, 192px"
                 alt={data.name ?? "Product image"}
                 className='object-cover object-center'
             />
         </div>
         <div className='relative ml-4 flex flex-1 flex-col justify-between sm:ml-6'>
             <div className='absolute z-10 right-0 top-0'>
-                <IconButton onClick={onRemove} icon={<X size={20} />} />
+                <IconButton onClick={onRemove} label={`Remove ${data.name} from cart`} icon={<X size={20} />} />
             </div>
             <div className='relative pr-9 sm:grid sm:grid-cols-2 sm:gap-x-6 sm:pr-0 '>
                 <div className='flex justify-between'>
