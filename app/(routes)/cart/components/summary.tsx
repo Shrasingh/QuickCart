@@ -2,14 +2,16 @@
 
 import axios from "axios"
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import toast from "react-hot-toast"
 
 import Button from "@/components/ui/Button"
 import Currency from "@/components/ui/currency"
 import useCart from "@/hooks/use-cart"
+import { getApiBaseUrl } from "@/lib/api"
 import { cartTotal } from "@/lib/cart"
 import {
+  CHECKOUT_UNAVAILABLE_MESSAGE,
   getCheckoutErrorMessage,
   isSafeCheckoutUrl,
   onBackForwardRestore,
@@ -19,6 +21,7 @@ const CHECKOUT_TIMEOUT_MS = 15_000
 
 const Summary = () => {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const items = useCart((state) => state.items)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -27,8 +30,11 @@ const Summary = () => {
     // cart and shows the confirmation). Here we only handle cancellations.
     if (searchParams.get("canceled")) {
       toast.error("Payment canceled. Your cart is unchanged — you can try again when ready.")
+      // Drop the flag from the URL so a reload or bookmark does not repeat
+      // the message for a cancellation that already happened.
+      router.replace("/cart")
     }
-  }, [searchParams])
+  }, [searchParams, router])
 
   // If the shopper presses Back on the Stripe page, the browser may restore
   // this page from the back-forward cache with `isSubmitting` still true.
@@ -41,11 +47,20 @@ const Summary = () => {
     // Guard against double submission: every request creates a new (unpaid)
     // order and Stripe session on the server, so a second click must be a no-op.
     if (isSubmitting || items.length === 0) return
+
+    // Same base URL (and trailing-slash handling) as the server-side data
+    // client. Without it there is nothing to call; say so instead of POSTing
+    // to a relative "undefined/checkout" on our own origin.
+    const apiBaseUrl = getApiBaseUrl()
+    if (!apiBaseUrl) {
+      toast.error(CHECKOUT_UNAVAILABLE_MESSAGE)
+      return
+    }
     setIsSubmitting(true)
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/checkout`,
+        `${apiBaseUrl}/checkout`,
         { productIds: items.map((item) => item.id) },
         { timeout: CHECKOUT_TIMEOUT_MS }
       )
@@ -77,6 +92,11 @@ const Summary = () => {
           <div className="text-base font-medium text-gray-900">Order total</div>
           <Currency value={totalPrice} />
         </div>
+        {/* The cart holds product snapshots; the admin re-prices from its
+            database and re-checks availability when the order is created. */}
+        <p className="text-xs text-gray-500">
+          Prices and availability are confirmed at checkout.
+        </p>
       </div>
       <Button
         disabled={items.length === 0 || isSubmitting}

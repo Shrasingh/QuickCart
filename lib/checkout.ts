@@ -73,3 +73,22 @@ export function onBackForwardRestore(onRestore: () => void): () => void {
   window.addEventListener("pageshow", handler)
   return () => window.removeEventListener("pageshow", handler)
 }
+
+/**
+ * Maximum length of an order id accepted from the `/order-success` URL. The
+ * admin issues UUIDs (36 characters); the bound only guards against junk.
+ */
+const ORDER_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/
+
+/**
+ * Returns the order id from the `?orderId=` query parameter if it looks like
+ * one, else null. Stripe appends the id the admin put in `success_url`, so a
+ * missing or malformed value means the page was reached some other way
+ * (bookmark, typed URL, crawler) and must not behave as if an order was
+ * placed. The id is only ever used as a label; it authorises nothing.
+ */
+export function parseOrderId(raw: string | null | undefined): string | null {
+  if (typeof raw !== "string") return null
+  const id = raw.trim()
+  return ORDER_ID_PATTERN.test(id) ? id : null
+}

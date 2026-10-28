@@ -45,8 +45,8 @@ What is **not** here: there is no separate "QA server" to maintain. Vercel Previ
 1. **Branch** from `main`: `git switch -c feat/<short-name>` (or `fix/…`, `chore/…`, `docs/…`). **[Manual]**
 2. **Develop** with the local checks: `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` before opening a PR. **[Implemented – scripts in `package.json`]**
 3. **Push and open a pull request** against `main`. The PR template (`.github/pull_request_template.md`) asks what changed, how it was tested, and whether docs/env vars changed. **[Implemented]**
-4. **CI runs automatically** (`.github/workflows/ci.yml`): `npm ci` → lint → typecheck → test → production build, on Node 22, with a placeholder `NEXT_PUBLIC_API_URL` so the build never needs a real backend. Concurrency cancels superseded runs. **[Implemented – not yet executed on GitHub because the workflow has not been pushed]**
-5. **Vercel builds a Preview deployment** for the branch and comments the URL on the PR. **[Platform – Vercel's default for a Git-connected project; no preview exists yet because no branch has ever been pushed]**
+4. **CI runs automatically** (`.github/workflows/ci.yml`): `npm ci` → lint → typecheck → test → production build, on Node 22, with a placeholder `NEXT_PUBLIC_API_URL` so the build never needs a real backend. Concurrency cancels superseded runs. **[Implemented – verified 2026-10-28: ran on both PR #1 commits and on the merge to `main`; the first PR run failed on an `npm ci` lockfile mismatch, fixed in `b53c6ab`]**
+5. **Vercel builds a Preview deployment** for the branch and comments the URL on the PR. **[Platform – verified 2026-10-28: Preview deployments were created for both PR #1 commits]**
 6. **Review** the diff and the preview URL. For storefront changes, walk the core journey on the preview: home → category → filters → product → add to cart → checkout (Stripe **test** card `4242 4242 4242 4242`) → order-received page. **[Manual]**
 7. **Merge** once CI is green and the review is approved. **[Manual; make it enforced via §3]**
 8. **Vercel deploys `main` to Production.** If the build fails, the previous production deployment stays live. **[Platform – verified behaviour]**
@@ -64,7 +64,8 @@ Only `main`. No `develop`, `staging` or `release` branches: with Preview deploym
 |---|---|---|
 | ESLint (`next/core-web-vitals`) | **[Implemented]** 0 errors, 0 warnings today | Hook misuse, a11y basics, unused code |
 | TypeScript `tsc --noEmit` (strict) | **[Implemented]** | Type regressions, wrong `params`/`searchParams` shapes |
-| Vitest (41 tests, node env, no network) | **[Implemented]** | Cart arithmetic, URL/filter logic, API client failure modes, checkout error mapping and redirect guard |
+| Vitest (54 tests, node env, no network) | **[Implemented]** | Cart arithmetic, URL/filter logic, API client failure modes, checkout error mapping, redirect guard, order-id guard |
+| Security headers (`next.config.mjs`) | **[Implemented]** CSP is report-only | Clickjacking, MIME sniffing, referrer leakage; CSP violations are visible in the browser console on previews |
 | `next build` | **[Implemented]** | Server/client component mistakes, broken imports, route config |
 | Branch protection on `main` | **[To configure]** | Merging with red CI; pushing directly to production |
 | Preview deployment review | **[Platform + Manual]** | Visual/behavioural regressions tests can't see |
@@ -78,7 +79,15 @@ GitHub → `Shrasingh/QuickCart` → **Settings → Branches → Add branch rule
 - Block force pushes. Block deletions.
 - Optionally "Require branches to be up to date before merging".
 
-This cannot be done from the repository itself; it needs your GitHub session.
+This cannot be done from the repository itself; it needs your GitHub session. Status on 2026-10-28: the public branches API still reports `protected: false` and no rulesets.
+
+### Promoting the Content Security Policy
+
+`next.config.mjs` sends the policy as `Content-Security-Policy-Report-Only`, so violations are logged in the browser console but nothing is blocked. To enforce it:
+
+1. On a preview deployment, open the browser console and walk home → category → filters → product → quick preview → cart → **Checkout** (stop at the Stripe page) → Back → `/order-success` link from an order.
+2. If no `[Report Only]` CSP violations appear, change the header key in `next.config.mjs` to `Content-Security-Policy` in a PR and repeat the walk on that PR's preview.
+3. Ignore violations whose source is `vercel.live` on Preview deployments: that is the Vercel toolbar, which is not injected into Production. If a violation appears for an image host, add it to `imageHosts`; for anything else, fix the source rather than widening the policy. The admin origin in `connect-src` comes from `NEXT_PUBLIC_API_URL` at build time, so each Vercel environment gets its own value.
 
 ---
 
@@ -89,7 +98,7 @@ This cannot be done from the repository itself; it needs your GitHub session.
 | Variable | Required | Local | Preview | Production | Notes |
 |---|---|---|---|---|---|
 | `NEXT_PUBLIC_API_URL` | yes | `http://localhost:3000/api/<devStoreId>` | `https://<admin>/api/<stagingStoreId>` | `https://<admin>/api/<prodStoreId>` | Selects the store. Public by design (the browser calls `/checkout` on it). |
-| `NEXT_PUBLIC_SITE_URL` | no | `http://localhost:3001` | leave unset (Vercel preview URLs change) | `https://quick-cart-eta-ecru.vercel.app` | Open Graph `metadataBase`. |
+| `NEXT_PUBLIC_SITE_URL` | no | `http://localhost:3001` | leave unset (Vercel preview URLs change) | `https://quick-cart-eta-ecru.vercel.app` | Open Graph `metadataBase`. Must include the scheme; a malformed value is ignored with a warning rather than failing the build. |
 | `NEXT_PUBLIC_HOME_BILLBOARD_ID` | no | per store | per store | per store | Hero billboard; falls back to the store's first billboard. |
 
 Set these in **Vercel → Project → Settings → Environment Variables**, choosing the **Preview** and **Production** scopes separately. **[Manual / To configure for Preview]**. None are secrets; there are no server-only secrets in this app. The GitHub Actions workflow needs **no secrets at all**.
@@ -130,7 +139,8 @@ Never `git push --force` to `main` as a rollback mechanism; it rewrites publishe
 
 **Implemented in this repository**
 
-- CI workflow with lint, typecheck, 41 tests and a production build, requiring no secrets.
+- CI workflow with lint, typecheck, 54 tests and a production build, requiring no secrets.
+- Baseline security headers and a report-only CSP.
 - PR template.
 - Graceful degradation when the API is unreachable (timeouts, fallbacks, one clear log line on misconfiguration).
 - `.env.example` documenting every variable with safe values.
@@ -142,8 +152,8 @@ Never `git push --force` to `main` as a rollback mechanism; it rewrites publishe
 
 **Needs the repository owner (cannot be done from the repo)**
 
-1. Push the workflow and open the first PR, so the CI check exists.
-2. Enable branch protection on `main` requiring that check.
+1. ~~Push the workflow and open the first PR, so the CI check exists.~~ Done: PR #1 merged 2026-10-28 with the check green.
+2. Enable branch protection on `main` requiring that check (still off as of 2026-10-28).
 3. Add a Preview-scoped `NEXT_PUBLIC_API_URL` pointing at a staging store (or leave it unset).
 4. Set `NEXT_PUBLIC_SITE_URL` in the Production scope.
 5. Update the GitHub repository "Website" field from the stale `quickcart-six.vercel.app` to `https://quick-cart-eta-ecru.vercel.app`.
