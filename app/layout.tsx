@@ -6,6 +6,7 @@ import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
 import ModelProviders from "@/providers/modal-provider";
 import ToastProvider from "@/providers/toast-provider";
+import { resolveSiteUrl } from "@/lib/site-url";
 
 const font = Urbanist({ subsets: ["latin"] });
 
@@ -13,10 +14,11 @@ const font = Urbanist({ subsets: ["latin"] });
 // pages like /cart don't freeze the categories that existed at build time.
 export const revalidate = 0;
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
+// Optional and cosmetic: a bad value must not break the build (see lib/site-url.ts).
+const siteUrl = resolveSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: siteUrl,
   title: {
     default: "QuickCart — Modern Online Store",
     template: "%s | QuickCart",
@@ -35,7 +37,7 @@ export const metadata: Metadata = {
     title: "QuickCart — Modern Online Store",
     description:
       "Browse electronics, fashion, home, books and more with a clean, fast shopping experience.",
-    url: siteUrl,
+    url: siteUrl.href,
     siteName: "QuickCart",
     type: "website",
   },

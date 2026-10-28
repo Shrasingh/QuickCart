@@ -7,6 +7,7 @@ import {
   getCheckoutErrorMessage,
   isSafeCheckoutUrl,
   onBackForwardRestore,
+  parseOrderId,
 } from "@/lib/checkout";
 
 /**
@@ -167,5 +168,27 @@ describe("onBackForwardRestore", () => {
       throw new Error("must not be called");
     });
     expect(() => cleanup()).not.toThrow();
+  });
+});
+
+describe("parseOrderId", () => {
+  it("accepts the UUID the admin puts in Stripe's success_url", () => {
+    const id = "0f1e2d3c-4b5a-4968-8776-655443322110";
+    expect(parseOrderId(id)).toBe(id);
+    expect(parseOrderId(`  ${id}  `)).toBe(id);
+  });
+
+  it("returns null when the parameter is missing or empty", () => {
+    expect(parseOrderId(null)).toBeNull();
+    expect(parseOrderId(undefined)).toBeNull();
+    expect(parseOrderId("")).toBeNull();
+    expect(parseOrderId("   ")).toBeNull();
+  });
+
+  it("rejects values that are not a plain id (markup, paths, oversized)", () => {
+    expect(parseOrderId("<script>alert(1)</script>")).toBeNull();
+    expect(parseOrderId("../cart")).toBeNull();
+    expect(parseOrderId("abc def")).toBeNull();
+    expect(parseOrderId("a".repeat(65))).toBeNull();
   });
 });
