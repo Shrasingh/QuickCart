@@ -9,7 +9,11 @@ import Button from "@/components/ui/Button"
 import Currency from "@/components/ui/currency"
 import useCart from "@/hooks/use-cart"
 import { cartTotal } from "@/lib/cart"
-import { getCheckoutErrorMessage, isSafeCheckoutUrl } from "@/lib/checkout"
+import {
+  getCheckoutErrorMessage,
+  isSafeCheckoutUrl,
+  onBackForwardRestore,
+} from "@/lib/checkout"
 
 const CHECKOUT_TIMEOUT_MS = 15_000
 
@@ -25,6 +29,11 @@ const Summary = () => {
       toast.error("Payment canceled. Your cart is unchanged — you can try again when ready.")
     }
   }, [searchParams])
+
+  // If the shopper presses Back on the Stripe page, the browser may restore
+  // this page from the back-forward cache with `isSubmitting` still true.
+  // Re-enable the button in that case; the listener is removed on unmount.
+  useEffect(() => onBackForwardRestore(() => setIsSubmitting(false)), [])
 
   const totalPrice = cartTotal(items)
 

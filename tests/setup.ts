@@ -1,6 +1,7 @@
-// Deterministic API base for the data-fetching actions, which read this at
-// module load. Set here (setup runs before test modules import) so tests
-// don't depend on a real .env.
+// Deterministic API base for the data-fetching actions. `lib/api.ts` reads
+// NEXT_PUBLIC_API_URL on every call (not at import time), so this only needs
+// to be in place before a test triggers a request. Setting it here keeps the
+// suite independent of a real .env; individual tests may override it.
 process.env.NEXT_PUBLIC_API_URL ??= "https://api.example.com";
 
 // Minimal in-memory localStorage so the zustand persist store (use-cart) can

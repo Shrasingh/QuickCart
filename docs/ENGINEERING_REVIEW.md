@@ -1,8 +1,8 @@
 # QuickCart — Engineering Review and Handoff
 
-**Date:** 2026-10-28 · **Branch:** `main` (working tree only — **nothing has been committed or pushed**) · **Baseline:** `bd43877`
+**Date:** 2026-10-28 · **Branch:** `chore/quickcart-production-hardening` (committed locally, not pushed; the review follow-up in §2.9 is a second commit on the same branch) · **Baseline:** `bd43877` on `main`
 
-This report covers everything that changed in the working tree during the production-readiness pass, why, how it was verified, and what remains. Read it alongside `docs/ENGINEERING_AUDIT.md` (findings, with IDs such as H2/M3 referenced below).
+This report covers everything that changed during the production-readiness pass, why, how it was verified, and what remains. Read it alongside `docs/ENGINEERING_AUDIT.md` (findings, with IDs such as H2/M3 referenced below).
 
 ---
 
@@ -12,7 +12,7 @@ This report covers everything that changed in the working tree during the produc
 |---|---|---|
 | `npm run lint` | pass, 5 warnings | **pass, 0 warnings** (rule override removed) |
 | `npm run typecheck` | pass | **pass** |
-| `npm test` | 19 tests / 3 files | **41 tests / 6 files, all passing** (Vitest 5.0.5, 2.6 s) |
+| `npm test` | 19 tests / 3 files | **41 tests / 6 files, all passing** (Vitest 5.0.5); 48 after the §2.9 follow-up |
 | `npm run build` | pass | **pass** (Next 16.4.3, all routes dynamic) |
 | `npm audit` | 0 prod / 3 dev (2 critical) | **0 vulnerabilities** (prod and dev) |
 | Production smoke test (`next start`, admin API **unreachable**) | not run | `/`, `/products`, `/products?q=…`, `/cart`, `/orders`, `/placeholder.svg` → 200 with the expected content; unknown category/product render the 404 page; each failed request logs one `[api] request failed (…)` line |
@@ -74,6 +74,15 @@ Each item lists: what existed, the problem, the change, how it is tested, and tr
 
 `lib/filters.ts` + `tests/filters.test.ts`, `tests/use-cart.test.ts`, `tests/setup.ts`, `.github/workflows/ci.yml`, the `filter.tsx` / `price-filter.tsx` / `search-bar.tsx` refactors onto `lib/filters.ts`, the "Order received / Processing" wording, and the `typecheck`/`test` scripts. All reviewed line by line; no changes needed beyond the Vitest upgrade.
 
+### 2.9 Follow-up after the pre-commit review — `lib/checkout.ts`, `summary.tsx`, `tests/checkout.test.ts`, `ci.yml`, `tests/setup.ts`
+
+The read-only review of the committed change set raised three findings; they are addressed in a separate follow-up commit on the same branch.
+
+- **Checkout button stuck after Back from Stripe.** `isSubmitting` is set before the browser navigates to Stripe. If the shopper presses Back, the browser may restore the cart page from its back-forward cache with that React state intact, leaving the button disabled. `onBackForwardRestore` in `lib/checkout.ts` registers a `pageshow` listener and invokes the callback only when `event.persisted` is true; `Summary` uses it in an effect whose cleanup removes the listener. Unit tests cover the wiring (registration, the `persisted` check, cleanup, SSR no-op) against a stubbed `window`. Whether a given browser actually serves the cart page from its back-forward cache after Stripe is **not** established by these tests; it needs a manual check on the preview deployment.
+- **HTML error pages in the checkout toast.** `getCheckoutErrorMessage` now surfaces a 4xx body only when the response declares `Content-Type: text/plain` (the admin's deliberate error messages) and the text does not start with `<`. A framework 404 page returned for a misconfigured API URL therefore falls back to the generic message. Tests added for text/plain 4xx, HTML 4xx, HTML mislabelled as text/plain, a 4xx string with no content type, JSON bodies, 5xx (plain and HTML), 503, and network errors.
+- **This document** was corrected regarding line endings (see §3).
+- Low-risk hardening in the same commit: `permissions: contents: read` at the workflow level of `ci.yml`, and the `tests/setup.ts` comment now says the API URL is read per call rather than at module load.
+
 ---
 
 ## 3. Files affected
@@ -82,7 +91,13 @@ Each item lists: what existed, the problem, the change, how it is tested, and tr
 
 **New (untracked):** `.github/workflows/ci.yml`, `.github/pull_request_template.md`, `docs/` (4 files), `hooks/use-hydrated.ts`, `lib/{api,cart,checkout,filters}.ts`, `public/placeholder.svg`, `tests/` (6 suites + setup), `vitest.config.mts`.
 
-**Unrelated changes:** none. Line endings were restored to match each file's existing convention so the diff shows only real edits (591 insertions / 468 deletions excluding the lockfile). `.env`, `.vercel`, `.next` and `tsconfig.tsbuildinfo` remain ignored and untouched. A grep of every changed file for key patterns (`sk_`, `pk_`, `whsec_`, tokens) found nothing.
+**Unrelated changes:** none. `.env`, `.vercel`, `.next` and `tsconfig.tsbuildinfo` remain ignored and untouched. A grep of every changed file for key patterns (`sk_`, `pk_`, `whsec_`, tokens) found nothing.
+
+**Line endings.** The repository has no `.gitattributes`, and this machine has `core.autocrlf=true`. Before this work, some files were stored in git with CRLF endings and the rest with LF. Sixteen of the CRLF-stored files were touched by this change set, and those sixteen were normalized to LF in the index (via a targeted `git add --renormalize` on exactly those paths) so that `git diff --check` no longer reports the carriage returns as trailing whitespace. Files that were not touched were left as they are, so the repository still contains a mix of CRLF and LF files. Consequences for reviewers:
+
+- The sixteen normalized files show as whole-file diffs. The functional changes in them are small; read them with `git diff --ignore-cr-at-eol` (or `-w`), or enable "Hide whitespace changes" on GitHub.
+- Four pre-existing trailing-space lines in `mobile-filters.tsx` and `modal.tsx` were stripped at the same time, because they became "added" lines once those files were re-added as LF.
+- Recommended follow-up, as its own commit after this PR merges: add a `.gitattributes` with `* text=auto` and run `git add --renormalize .` so every file is stored as LF and this does not recur.
 
 ---
 

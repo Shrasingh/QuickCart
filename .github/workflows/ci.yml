@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+# The job only reads the repository; it never writes to it or to any other
+# GitHub resource, so the default token gets the minimum scope.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
