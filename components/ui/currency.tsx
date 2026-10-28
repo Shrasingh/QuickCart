@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import useHydrated from "@/hooks/use-hydrated"
 import { cn } from "@/lib/utils"
 
 export const formatter = new Intl.NumberFormat("en-US", {
@@ -17,15 +17,11 @@ const  Currency : React.FC<CurrencyProps> = ({
     value,
     className
 }) => {
-
-    const [isMounted, setIsMounted] = useState(false)
-
-    useEffect(() => {
-        setIsMounted(true);
-    }, [])
-
-    if(!isMounted){
-        return null;
+    // Prices are often read from the localStorage-backed cart, which the
+    // server can't see; render only after hydration to avoid a mismatch.
+    const hydrated = useHydrated()
+    if (!hydrated) {
+        return null
     }
 
   return (

@@ -9,12 +9,13 @@ import Info from '@/components/ui/info'
 
 export const revalidate = 0
 
-interface pageProps {
+interface PageProps {
     params : Promise<{
         productId : string
     }>
 }
-const page : React.FC<pageProps> = async(props) => {
+
+const ProductPage : React.FC<PageProps> = async (props) => {
     const params = await props.params
     const product = await getProduct(params.productId)
 
@@ -22,9 +23,11 @@ const page : React.FC<pageProps> = async(props) => {
         notFound()
     }
 
-    const suggestedProducts = await getProducts({
-        categoryId : product?.category?.id
-    })
+    // "Related" = other products in the same category. The category query
+    // naturally includes the product being viewed, so drop it.
+    const related = (await getProducts({ categoryId: product.category?.id }))
+        .filter((item) => item.id !== product.id)
+
   return (
     <div className='bg-white'>
         <Container>
@@ -32,16 +35,15 @@ const page : React.FC<pageProps> = async(props) => {
                 <div className='lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8'>
                     <Gallery images={product.images}/>
                     <div className='mt-10 px-4 sm:mt-16 sm:px-0 lg:mt-0'>
-                        {/* info */}
                         <Info data={product} />
-                    </div> 
+                    </div>
                 </div>
                 <hr className='my-10'/>
-                <ProductList items={suggestedProducts} title="Related Products"/>
+                <ProductList items={related} title="Related Products"/>
             </div>
         </Container>
     </div>
   )
 }
 
-export default page
+export default ProductPage

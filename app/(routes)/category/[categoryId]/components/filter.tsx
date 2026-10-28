@@ -6,6 +6,7 @@ import { Color, Size } from "@/type"
 import qs from "query-string"
 import Button from "@/components/ui/Button"
 import { cn } from "@/lib/utils"
+import { toggleFilterValue } from "@/lib/filters"
 
 
 interface FilterProps {
@@ -23,18 +24,10 @@ const Filter : React.FC<FilterProps> = ({
     const router = useRouter();
 
     const selectedValue = searchParams.get(valueKey);
-    
+
     const onClick = (id : string) => {
         const current = qs.parse(searchParams.toString());
-
-        const query = {
-            ...current,
-            [valueKey] : id
-        }
-
-        if(current[valueKey] === id){
-            query[valueKey] = null
-        }
+        const query = toggleFilterValue(current, valueKey, id);
 
         const url = qs.stringifyUrl({
             url : window.location.href,

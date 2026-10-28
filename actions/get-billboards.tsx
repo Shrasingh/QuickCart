@@ -1,15 +1,7 @@
 import { Billboard } from "@/type";
+import { apiGet } from "@/lib/api";
 
-const URL = `${process.env.NEXT_PUBLIC_API_URL}/billboards`;
-
-const getBillboards = async () : Promise<Billboard[]> => {
-    try {
-        const res = await fetch(URL);
-        if (!res.ok) return [];
-        return res.json();
-    } catch {
-        return [];
-    }
-}
+const getBillboards = async (): Promise<Billboard[]> =>
+  apiGet<Billboard[]>("/billboards", []);
 
 export default getBillboards

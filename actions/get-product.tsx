@@ -1,16 +1,7 @@
 import { Product } from "@/type";
+import { apiGet } from "@/lib/api";
 
-const URL = `${process.env.NEXT_PUBLIC_API_URL}/products`;
-
-
-const getProduct = async (id : string) : Promise<Product | null> => {
-    try {
-        const res = await fetch(`${URL}/${id}`);
-        if (!res.ok) return null;
-        return res.json();
-    } catch {
-        return null;
-    }
-}
+const getProduct = async (id: string): Promise<Product | null> =>
+  apiGet<Product | null>(`/products/${encodeURIComponent(id)}`, null);
 
 export default getProduct

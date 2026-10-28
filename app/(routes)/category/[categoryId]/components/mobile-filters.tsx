@@ -42,17 +42,17 @@ const MobileFilters : React.FC<MobileFiltersProps> = ({
 
             {/* Dialog position */}
             <div className="fixed inset-0 z-40 flex">
-            <DialogPanel className="relative ml-auto flex h-full w-full max-w-xs 
+            <DialogPanel className="relative ml-auto flex h-full w-full max-w-xs
             flex-col overflow-y-auto bg-white py-4 pb-6 shadow-xl">
 
                 {/* close button */}
                 <div className="flex items-center justify-end px-4" onClick={onClose} >
-                    <IconButton onClick={onClose} icon={<X size={15} />} />
+                    <IconButton onClick={onClose} label="Close filters" icon={<X size={15} />} />
                 </div>
 
                 {/* Render filter */}
                 <div className="p-4">
-                <Filter 
+                <Filter
                     valueKey="sizeId"
                     name="Sizes"
                     data={sizes}
@@ -67,7 +67,7 @@ const MobileFilters : React.FC<MobileFiltersProps> = ({
             </DialogPanel>
             </div>
         </Dialog>
-        
+
     </>
   )
 }
