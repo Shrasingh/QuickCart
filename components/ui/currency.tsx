@@ -1,6 +1,3 @@
-"use client"
-
-import useHydrated from "@/hooks/use-hydrated"
 import { cn } from "@/lib/utils"
 
 export const formatter = new Intl.NumberFormat("en-US", {
@@ -13,20 +10,17 @@ interface CurrencyProps {
     className?: string
 }
 
-const  Currency : React.FC<CurrencyProps> = ({
-    value,
-    className
-}) => {
-    // Prices are often read from the localStorage-backed cart, which the
-    // server can't see; render only after hydration to avoid a mismatch.
-    const hydrated = useHydrated()
-    if (!hydrated) {
-        return null
-    }
-
+/**
+ * Formats a price. Rendered on the server too, so catalog prices are in the
+ * HTML for crawlers and the first paint. Components whose value comes from
+ * localStorage (the cart) gate themselves with `useHydrated` before rendering
+ * this, which is where the hydration guard belongs.
+ */
+const Currency: React.FC<CurrencyProps> = ({ value, className }) => {
+  const amount = typeof value === "string" ? Number(value.trim()) : value
   return (
-    <span className={cn('font-semibold', className)}>
-        {formatter.format(Number(value))}
+    <span className={cn("font-semibold", className)}>
+      {typeof amount === "number" && Number.isFinite(amount) ? formatter.format(amount) : "—"}
     </span>
   )
 }
