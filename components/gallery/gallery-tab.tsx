@@ -7,13 +7,16 @@ import { Image as ImageType } from '@/type'
 
 interface GalleryTabProps {
     image : ImageType
+    /** Accessible name: the thumbnail is an icon-only button, so it needs one. */
+    label : string
 }
 
 const GalleryTab : React.FC<GalleryTabProps> = ({
-    image
+    image,
+    label
 }) => {
   return (
-    <Tab className='relative flex aspect-square cursor-pointer 
+    <Tab aria-label={label} className='relative flex aspect-square cursor-pointer 
     items-center justify-center rounded-md bg-white'>
         {({selected}) => (
             <div>
