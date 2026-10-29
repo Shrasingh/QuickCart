@@ -7,31 +7,33 @@ import MobileFilters from "../category/[categoryId]/components/mobile-filters"
 import PriceFilter from "@/components/price-filter"
 import NoResults from "@/components/ui/no-results"
 import ProductCard from "@/components/ui/product-card"
+import { firstParam, priceParam, type RawParam } from "@/lib/search-params"
 
 export const revalidate = 0
 
 interface ProductsPageProps {
+  // A key repeated in the URL arrives as string[]; see lib/search-params.ts.
   searchParams: Promise<{
-    q?: string
-    colorId?: string
-    sizeId?: string
-    minPrice?: string
-    maxPrice?: string
+    q?: RawParam
+    colorId?: RawParam
+    sizeId?: RawParam
+    minPrice?: RawParam
+    maxPrice?: RawParam
   }>
 }
 
 const ProductsPage = async (props: ProductsPageProps) => {
   const searchParams = await props.searchParams
-  const query = searchParams.q?.trim()
+  const query = firstParam(searchParams.q)
 
   // Independent requests, issued together (see category page).
   const [products, sizes, colors] = await Promise.all([
     getProducts({
       search: query,
-      colorId: searchParams.colorId,
-      sizeId: searchParams.sizeId,
-      minPrice: searchParams.minPrice,
-      maxPrice: searchParams.maxPrice,
+      colorId: firstParam(searchParams.colorId),
+      sizeId: firstParam(searchParams.sizeId),
+      minPrice: priceParam(searchParams.minPrice),
+      maxPrice: priceParam(searchParams.maxPrice),
     }),
     getSizes(),
     getColors(),

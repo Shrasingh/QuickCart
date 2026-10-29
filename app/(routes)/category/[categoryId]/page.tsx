@@ -10,6 +10,7 @@ import NoResults from "@/components/ui/no-results"
 import ProductCard from "@/components/ui/product-card"
 import MobileFilters from "./components/mobile-filters"
 import PriceFilter from "@/components/price-filter"
+import { firstParam, priceParam, type RawParam } from "@/lib/search-params"
 
 
 export const revalidate = 0
@@ -17,11 +18,12 @@ interface CategoryProps {
     params : Promise<{
         categoryId : string
     }>,
+    // A key repeated in the URL arrives as string[]; see lib/search-params.ts.
     searchParams : Promise<{
-        colorId? : string
-        sizeId? : string
-        minPrice? : string
-        maxPrice? : string
+        colorId? : RawParam
+        sizeId? : RawParam
+        minPrice? : RawParam
+        maxPrice? : RawParam
     }>
 }
 
@@ -35,10 +37,10 @@ const CategoryPage : React.FC<CategoryProps> = async (props) => {
         getCategory(params.categoryId),
         getProducts({
             categoryId : params.categoryId,
-            colorId : searchParams.colorId,
-            sizeId : searchParams.sizeId,
-            minPrice : searchParams.minPrice,
-            maxPrice : searchParams.maxPrice
+            colorId : firstParam(searchParams.colorId),
+            sizeId : firstParam(searchParams.sizeId),
+            minPrice : priceParam(searchParams.minPrice),
+            maxPrice : priceParam(searchParams.maxPrice)
         }),
         getSizes(),
         getColors(),

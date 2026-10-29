@@ -49,3 +49,18 @@ describe("getProducts", () => {
     await expect(getProducts({})).resolves.toEqual([]);
   });
 });
+
+describe("getProducts: response shape", () => {
+  it.each([{}, null, { items: [] }, "oops"])("returns an empty list when the body is %j instead of an array", async (body) => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => body });
+    await expect(getProducts({})).resolves.toEqual([]);
+  });
+
+  it("URL-encodes the search term", async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => [] });
+    await getProducts({ search: "desk & lamp #2" });
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("search=desk%20%26%20lamp%20%232");
+    expect(new URL(url).searchParams.get("search")).toBe("desk & lamp #2");
+  });
+});

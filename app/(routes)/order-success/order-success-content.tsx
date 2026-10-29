@@ -29,10 +29,13 @@ const OrderSuccessContent = () => {
   const [seconds, setSeconds] = useState(REDIRECT_SECONDS)
 
   // Clear the cart, record the order, and greet the customer — once per id.
+  // `addOrder` returns false when this device has already recorded the id
+  // (a reload, a bookmark, Back from the catalog, or a re-shared link), in
+  // which case the cart is left alone: it may already hold a new order.
   useEffect(() => {
     if (!orderId) return
+    if (!addOrder(orderId)) return
     removeAll()
-    addOrder(orderId)
     toast.success("🎉 Order received! Thanks for shopping with QuickCart.")
   }, [orderId, removeAll, addOrder])
 

@@ -1,6 +1,6 @@
 # QuickCart — Engineering Review and Handoff
 
-**Date:** 2026-10-28 · **Branch:** `chore/quickcart-production-hardening` (committed locally, not pushed; the review follow-up in §2.9 is a second commit on the same branch) · **Baseline:** `bd43877` on `main`
+**Date:** 2026-10-28 · **Branch:** `chore/quickcart-production-hardening`, merged into `main` via PRs #1 (`31ca09a`) and #2 (`7c80c2a`) on 2026-10-28 · **Baseline:** `bd43877` on `main` · **Status:** historical record of that pass; the 2026-10-29 remediation (branch `fix/audit-remediation`) is described in the README and the pull request itself.
 
 This report covers everything that changed during the production-readiness pass, why, how it was verified, and what remains. Read it alongside `docs/ENGINEERING_AUDIT.md` (findings, with IDs such as H2/M3 referenced below).
 

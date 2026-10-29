@@ -64,7 +64,7 @@ Only `main`. No `develop`, `staging` or `release` branches: with Preview deploym
 |---|---|---|
 | ESLint (`next/core-web-vitals`) | **[Implemented]** 0 errors, 0 warnings today | Hook misuse, a11y basics, unused code |
 | TypeScript `tsc --noEmit` (strict) | **[Implemented]** | Type regressions, wrong `params`/`searchParams` shapes |
-| Vitest (54 tests, node env, no network) | **[Implemented]** | Cart arithmetic, URL/filter logic, API client failure modes, checkout error mapping, redirect guard, order-id guard |
+| Vitest (node env, no network; count in README → Commands) | **[Implemented]** | Cart arithmetic, URL/filter logic, API client failure modes and shape guards, checkout error mapping, redirect guard, order-id guard, query-param normalisation, order store |
 | Security headers (`next.config.mjs`) | **[Implemented]** CSP is report-only | Clickjacking, MIME sniffing, referrer leakage; CSP violations are visible in the browser console on previews |
 | `next build` | **[Implemented]** | Server/client component mistakes, broken imports, route config |
 | Branch protection on `main` | **[To configure]** | Merging with red CI; pushing directly to production |
@@ -111,9 +111,9 @@ Recommended setup (requires the admin, not this repo):
 
 1. In EcommerceCloud, create a second store (e.g. "QuickCart Staging") under the same account, or run the seed script against a separate database. Note its `storeId`.
 2. In Vercel, set `NEXT_PUBLIC_API_URL` for the **Preview** scope to `https://<admin>/api/<stagingStoreId>`.
-3. The admin's `FRONTEND_STORE_URL` is a single value used for Stripe redirect URLs, so **checkout from a preview will redirect back to the production storefront's `/order-success`**, not the preview. This is a limitation of the current admin (one storefront URL per deployment). Options: accept it for previews (payment still works, the order-received page just opens on production), or deploy a separate staging admin with `FRONTEND_STORE_URL` pointing at a fixed preview alias. **[Not configured; documented]**
+3. The admin accepts a browser checkout only from origins it knows: the origin of its `FRONTEND_STORE_URL` plus the comma-separated `ALLOWED_STOREFRONT_ORIGINS`, and it redirects each allow-listed origin back to **itself** (an allow-listed preview returns to the preview's `/order-success`, never to production). Any other origin receives a 403 before an order is written. Per-PR preview URLs change on every push, so either (a) give the storefront a fixed Preview alias in Vercel (Project → Settings → Domains → assign a domain to the Preview branch) and add that origin to the admin's **Preview**-scope `ALLOWED_STOREFRONT_ORIGINS`, or (b) accept that per-PR previews cannot complete a checkout (they still render the catalog and cart). **[To configure in the admin; the code path is tested in EcommerceCloud `tests/api/payments.test.ts`]**
 
-Until a staging store exists, the safe interim is to **not** set `NEXT_PUBLIC_API_URL` for Preview at all: previews will then render an empty catalog (the app degrades gracefully) and checkout cannot create orders. That still validates build, layout and navigation.
+Until a staging store exists, the safe interim is to **not** set `NEXT_PUBLIC_API_URL` for Preview at all: previews will then render an empty catalog (the app degrades gracefully) and checkout cannot create orders. That still validates build, layout and navigation. Even if a Preview does point at the production admin by mistake, the admin refuses the checkout (its origin is not allow-listed), so no production order is created.
 
 ### Stripe
 
@@ -139,8 +139,8 @@ Never `git push --force` to `main` as a rollback mechanism; it rewrites publishe
 
 **Implemented in this repository**
 
-- CI workflow with lint, typecheck, 54 tests and a production build, requiring no secrets.
-- Baseline security headers and a report-only CSP.
+- CI workflow with lint, typecheck, the Vitest suite and a production build, requiring no secrets.
+- Baseline security headers, a report-only CSP, and route-level error boundaries (`app/error.tsx`, `app/global-error.tsx`).
 - PR template.
 - Graceful degradation when the API is unreachable (timeouts, fallbacks, one clear log line on misconfiguration).
 - `.env.example` documenting every variable with safe values.

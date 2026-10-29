@@ -45,8 +45,8 @@ All of the following are implemented and running on the live demo.
 | **Quick preview** | Modal preview from any product card without leaving the grid |
 | **Cart** | Persistent (localStorage) cart with live item count in the navbar; each product is a single unit |
 | **Checkout** | One request to the admin creates the order and returns a Stripe Checkout URL; double-clicks are blocked, server error messages are shown to the user, cancellation returns to the cart |
-| **Orders** | Order-received page after payment and a per-device `/orders` list. The storefront cannot see payment status (that is confirmed by the admin's Stripe webhook), so orders are shown as **Processing**, never falsely as paid. Reaching `/order-success` without a well-formed `orderId` shows a neutral page and leaves the cart untouched |
-| **Resilience** | Every API call has a 10 s timeout and a safe fallback; a missing API URL is logged once with instructions instead of failing silently |
+| **Orders** | Order-received page after payment and a per-device `/orders` list. The storefront cannot see payment status (that is confirmed by the admin's Stripe webhook), so orders are shown as **Processing**, never falsely as paid. Reaching `/order-success` without a well-formed `orderId` shows a neutral page and leaves the cart untouched; revisiting it for an order this device already recorded (reload, Back, bookmark) leaves the cart untouched too |
+| **Resilience** | Every API call has a 10 s timeout, a response-shape check and a safe fallback; a missing API URL is logged once with instructions instead of failing silently. An admin outage on a product or category page shows a retryable error page (`app/error.tsx`), not a false 404. Repeated or malformed query parameters (`?q=a&q=b`, `?minPrice=abc`) are normalised instead of crashing the page |
 | **UX** | Skeleton loading state, empty states with recovery actions, 404 page, responsive layout, keyboard-operable product cards, labelled icon buttons, Open Graph metadata |
 
 ## Tech stack
@@ -94,11 +94,13 @@ app/
     product/[productId]/page.tsx  Product detail + related products
     cart/                         Cart page, cart-item, components/summary.tsx (checkout)
     orders/page.tsx               Per-device guest order list
-    order-success/                Order-received page (clears cart, records order id)
+    order-success/                Order-received page (clears cart, records order id, once per id)
   loading.tsx · not-found.tsx     Skeleton and 404
+  error.tsx · global-error.tsx    Retryable error boundaries (catalog unavailable)
 actions/get-*.tsx                 One function per admin endpoint; thin wrappers over lib/api.ts
 lib/
-  api.ts                          getApiBaseUrl / fetchJson / apiGet — timeout, fallback, diagnostics
+  api.ts                          getApiBaseUrl / fetchJson / apiGet / apiGetOne — timeout, shape guards, 404 vs outage
+  search-params.ts                firstParam / priceParam — tolerate repeated and malformed query params
   cart.ts                         toCents / cartTotal — exact decimal arithmetic for the displayed total
   checkout.ts                     Error-message mapping and https-only redirect guard for checkout
   filters.ts                      Pure URL/query helpers behind the filter and search UI
@@ -116,7 +118,7 @@ Design rules worth knowing:
 
 - **Server components own data.** Pages `await` the `actions/*` functions and fetch independent resources with `Promise.all`, so page latency is the slowest request, not the sum.
 - **Nothing on the client is trusted for money.** The cart sends product ids only; the admin re-reads prices from its database and converts them to integer cents before talking to Stripe. The total in the cart is for display.
-- **Fail soft on reads, fail loud on config.** A slow or down admin yields an empty section after 10 s, never a crashed page. A missing `NEXT_PUBLIC_API_URL` logs a single clear error.
+- **Fail soft on lists, fail honestly on records.** A slow or down admin yields an empty list section after 10 s; a product or category page during an outage renders the error boundary with a retry button rather than claiming the item does not exist (`apiGetOne` returns `null` only for a 404). A missing `NEXT_PUBLIC_API_URL` logs a single clear error. Every JSON body is shape-checked before a component touches it.
 - **Hydration-safe persisted state.** Anything read from `localStorage` renders only after `useHydrated()` is true, avoiding server/client markup mismatches without `setState`-in-effect.
 
 ## Core flows
@@ -127,7 +129,7 @@ Design rules worth knowing:
 
 **Checkout** — `Summary.onCheckout` sets an in-flight flag (button disabled, "Redirecting…") → `POST {API}/checkout { productIds }` (base URL from `lib/api.ts`; if it is unset the button shows "Checkout is temporarily unavailable" instead of posting) with a 15 s timeout → on 2xx, the returned URL is accepted only if it is absolute `https:` and the browser navigates to Stripe → on 4xx the admin's customer-facing text is shown (e.g. an item sold out), on 5xx/network a generic message, and the button is re-enabled.
 
-**After payment** — Stripe redirects to `/order-success?orderId=…`: if the id is well-formed (`parseOrderId` in `lib/checkout.ts`) the cart is cleared, the id is stored in `localStorage["quickcart-orders"]`, and a 5-second countdown returns to the catalog; without one the page says "No order to show" and changes nothing. Payment confirmation itself happens admin-side via webhook; the storefront never claims an order is paid. Cancelling in Stripe returns to `/cart?canceled=1`, which shows a toast, leaves the cart intact and drops the flag from the URL so a reload does not repeat it.
+**After payment** — Stripe redirects to `/order-success?orderId=…`: if the id is well-formed (`parseOrderId` in `lib/checkout.ts`) and not yet recorded on this device, the cart is cleared, the id is stored in `localStorage["quickcart-orders"]`, and a 5-second countdown returns to the catalog; without a well-formed id the page says "No order to show" and changes nothing, and a revisit for an already recorded id leaves the cart alone (it may hold the next order). Payment confirmation itself happens admin-side via webhook; the storefront never claims an order is paid. Cancelling in Stripe returns to `/cart?canceled=1`, which shows a toast, leaves the cart intact and drops the flag from the URL so a reload does not repeat it.
 
 ## Data
 
@@ -144,7 +146,7 @@ Response types for the admin API live in `type.ts`. The admin's schema, migratio
 
 ### Prerequisites
 
-- **Node.js 20.9 or newer** (required by Next.js 16; CI uses Node 22) and npm.
+- **Node.js 22 or newer** (`query-string@10` requires it; `package.json` declares `engines.node >= 22`; CI uses Node 22) and npm.
 - A running **EcommerceCloud** admin with at least one store. Follow that repo's README; its seed script creates a demo catalog and prints the `storeId` you need below.
 
 ### 1. Install
@@ -199,7 +201,7 @@ If the home page is empty, check the terminal: a missing or wrong `NEXT_PUBLIC_A
 | `npm start` | Serve the production build |
 | `npm run lint` | ESLint (`next/core-web-vitals`); currently 0 errors, 0 warnings |
 | `npm run typecheck` | `tsc --noEmit` in strict mode |
-| `npm test` | Vitest, single run (54 tests) |
+| `npm test` | Vitest, single run (91 tests) |
 | `npm run test:watch` | Vitest in watch mode |
 
 All four checks run in CI on every push and pull request to `main`.
@@ -212,8 +214,10 @@ Tests are **logic-level** and run in a plain Node environment in under 5 seconds
 |---|---|
 | `tests/cart.test.ts` | `toCents` / `cartTotal`: exact decimal → cents, half-cent rounding, invalid prices |
 | `tests/checkout.test.ts` | Checkout error mapping (4xx text surfaced, 5xx hidden, 503, network), the https-only redirect guard, the back-forward-cache listener and the `/order-success` order-id guard |
-| `tests/api.test.ts` | `lib/api.ts`: base-URL handling, timeout signal, non-2xx / thrown / invalid-JSON fallbacks, missing-env behaviour |
-| `tests/get-products.test.ts` | Query-string construction for every filter, with `fetch` mocked |
+| `tests/api.test.ts` | `lib/api.ts`: base-URL handling, timeout signal, non-2xx / thrown / invalid-JSON / wrong-shape fallbacks, missing-env behaviour, `apiGetOne` (null only on 404, throws on outage) |
+| `tests/search-params.test.ts` | Repeated (`string[]`) and malformed query parameters are normalised, not forwarded or thrown on |
+| `tests/use-orders.test.ts` | Guest order store: records an id once, reports revisits, persists under `quickcart-orders` |
+| `tests/get-products.test.ts` | Query-string construction and encoding for every filter, non-array bodies yield an empty list, with `fetch` mocked |
 | `tests/filters.test.ts` | Price-range toggling, single-select filter toggling, search URL building |
 | `tests/use-cart.test.ts` | Cart store: add, duplicate rejection, remove, clear (with an in-memory `localStorage`) |
 | `tests/site-url.test.ts` | `NEXT_PUBLIC_SITE_URL` resolution: absolute URLs accepted, blank/malformed values fall back instead of failing the build |
@@ -251,7 +255,7 @@ The full workflow — environments, validation gates, branch protection steps, r
 - **No authentication, by design.** Guest checkout only; `/orders` is a per-device convenience and the `orderId` in the URL authorises nothing.
 - **Error messages.** Only the admin's deliberate 4xx texts reach the user; 5xx bodies never do.
 - **Security headers.** `next.config.mjs` sends `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, a `Referrer-Policy`, a restrictive `Permissions-Policy`, and a Content Security Policy in **report-only** mode (see `docs/DEPLOYMENT_WORKFLOW.md` for promoting it to enforcing). `X-Powered-By` is disabled.
-- **Dependencies.** `npm audit` reports 0 vulnerabilities (production and dev) as of 2026-10-28.
+- **Dependencies.** `npm audit` reports 0 vulnerabilities (production and dev) as of 2026-10-29.
 - **What this is not:** a security-audited production shop. The browser calls the admin's `/checkout` endpoint directly, so rate limiting and bot protection for checkout **cannot** be implemented in this repository; they belong on the admin (an edge/WAF rule or a shared-store limiter in EcommerceCloud). The CSP is report-only until it has been verified on a preview deployment.
 
 ## Known limitations
@@ -262,7 +266,7 @@ The full workflow — environments, validation gates, branch protection steps, r
 - **Search is desktop-only** (hidden below the `md` breakpoint) and the category nav does not wrap on very narrow screens with many categories.
 - **Prices are USD** and formatted for `en-US`.
 - **No end-to-end tests** yet; see Testing strategy.
-- **Preview deployments share one Stripe redirect URL** (the admin has a single `FRONTEND_STORE_URL`), so a checkout started on a preview returns to production's `/order-success`.
+- **Preview checkout needs an allow-listed origin.** The admin only accepts checkout from, and redirects back to, browser origins it knows: its `FRONTEND_STORE_URL` plus any `ALLOWED_STOREFRONT_ORIGINS`. A Preview deployment on an unlisted origin gets a 403 ("Checkout failed" toast) rather than creating an order or being sent to production's `/order-success`. To test checkout on previews, use a fixed preview alias and list it in the admin's Preview environment (see `docs/DEPLOYMENT_WORKFLOW.md` §4).
 
 ## Contributing and code quality
 
