@@ -1,7 +1,7 @@
 import qs from "query-string"
 
 import { Product } from "@/type";
-import { apiGet } from "@/lib/api";
+import { apiGet, isArray } from "@/lib/api";
 
 export interface ProductQuery {
     categoryId?: string;
@@ -28,7 +28,7 @@ const getProducts = async (query: ProductQuery): Promise<Product[]> => {
             maxPrice: query.maxPrice,
         },
     })
-    return apiGet<Product[]>(path, [])
+    return apiGet<Product[]>(path, [], isArray as (v: unknown) => v is Product[])
 }
 
 export default getProducts

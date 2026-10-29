@@ -1,7 +1,7 @@
 import { Size } from "@/type";
-import { apiGet } from "@/lib/api";
+import { apiGet, isArray } from "@/lib/api";
 
 const getSizes = async (): Promise<Size[]> =>
-  apiGet<Size[]>("/sizes", []);
+  apiGet<Size[]>("/sizes", [], isArray as (v: unknown) => v is Size[]);
 
 export default getSizes
