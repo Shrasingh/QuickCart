@@ -15,9 +15,10 @@ const Billboard : React.FC<BillboardTypeProps> = ({
             >
                 {data.label && (
                 <div className="h-full w-full flex flex-col justify-center items-center text-center gap-y-8 bg-black/30">
-                    <div className="font-bold text-3xl sm:text-5xl lg:text-6xl sm:max-w-xl max-w-xs text-white drop-shadow-lg">
+                    {/* The only page-level heading on the home and category pages, so it is the h1. */}
+                    <h1 className="font-bold text-3xl sm:text-5xl lg:text-6xl sm:max-w-xl max-w-xs text-white drop-shadow-lg">
                         {data.label}
-                    </div>
+                    </h1>
                 </div>
                 )}
             </div>

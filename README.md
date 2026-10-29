@@ -12,6 +12,7 @@ QuickCart is the **frontend half of a two-app system**. It has no database and n
 
 - [The problem it solves](#the-problem-it-solves)
 - [Features](#features)
+- [Screenshots](#screenshots)
 - [Tech stack](#tech-stack)
 - [Architecture](#architecture)
 - [Core flows](#core-flows)
@@ -48,6 +49,20 @@ All of the following are implemented and running on the live demo.
 | **Orders** | Order-received page after payment and a per-device `/orders` list. The storefront cannot see payment status (that is confirmed by the admin's Stripe webhook), so orders are shown as **Processing**, never falsely as paid. Reaching `/order-success` without a well-formed `orderId` shows a neutral page and leaves the cart untouched; revisiting it for an order this device already recorded (reload, Back, bookmark) leaves the cart untouched too |
 | **Resilience** | Every API call has a 10 s timeout, a response-shape check and a safe fallback; a missing API URL is logged once with instructions instead of failing silently. An admin outage on a product or category page shows a retryable error page (`app/error.tsx`), not a false 404. Repeated or malformed query parameters (`?q=a&q=b`, `?minPrice=abc`) are normalised instead of crashing the page |
 | **UX** | Skeleton loading state, empty states with recovery actions, 404 page, responsive layout, keyboard-operable product cards, labelled icon buttons, Open Graph metadata |
+
+## Screenshots
+
+Captured from a production build pointed at the live admin (seeded demo catalog), 2026-10-29.
+
+| Home (desktop) | Product page |
+|---|---|
+| ![Home page: billboard and featured products](docs/screenshots/home.jpg) | ![Product page: gallery, price, discount badge, stock state, add to cart](docs/screenshots/product.jpg) |
+
+| Cart with one item | Home (375 px wide) |
+|---|---|
+| ![Cart page: item, order total, checkout button](docs/screenshots/cart.jpg) | <img src="docs/screenshots/home-mobile.jpg" alt="Home page on a phone: scrollable category nav, cart button, billboard" width="260"> |
+
+The admin dashboard (EcommerceCloud) is behind sign-in; its screenshots live in that repository.
 
 ## Tech stack
 
@@ -263,9 +278,10 @@ The full workflow — environments, validation gates, branch protection steps, r
 - **Single unit per product.** The cart holds each product once because the admin archives a product when it sells (single-unit inventory). Quantities would need an admin change first.
 - **Order status is not live.** The admin exposes no public order endpoint, so `/orders` can only say "Processing".
 - **Cart prices are snapshots.** The cart stores the product as it was when added; if the admin changes a price afterwards, the cart shows the old figure until the item is re-added, while the admin charges the current price. The cart says so under the total. Re-pricing the cart on load would need a batch product endpoint on the admin.
-- **Search is desktop-only** (hidden below the `md` breakpoint) and the category nav does not wrap on very narrow screens with many categories.
+- **Search is desktop-only** (hidden below the `md` breakpoint). The category nav scrolls sideways on narrow screens instead of wrapping; a mobile menu would be the next step.
 - **Prices are USD** and formatted for `en-US`.
 - **No end-to-end tests** yet; see Testing strategy.
+- **Missing products and categories render the 404 page with HTTP status 200.** `app/(routes)/loading.tsx` wraps every route in a streaming boundary, so the shell (status 200) is already sent when `notFound()` runs; verified on 2026-10-29 that removing that file makes `/product/<unknown>` and `/category/<unknown>` answer 404. Users see the right page either way; only crawlers see a "soft 404". The fix is to move the skeleton out of the shared boundary (or drop it for the two record pages), which is a UX trade-off left open on purpose.
 - **Preview checkout needs an allow-listed origin.** The admin only accepts checkout from, and redirects back to, browser origins it knows: its `FRONTEND_STORE_URL` plus any `ALLOWED_STOREFRONT_ORIGINS`. A Preview deployment on an unlisted origin gets a 403 ("Checkout failed" toast) rather than creating an order or being sent to production's `/order-success`. To test checkout on previews, use a fixed preview alias and list it in the admin's Preview environment (see `docs/DEPLOYMENT_WORKFLOW.md` §4).
 
 ## Contributing and code quality

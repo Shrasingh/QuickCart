@@ -2,7 +2,20 @@
 
 All notable changes to the storefront. Dates are merge dates on `main`.
 
-## Unreleased — `fix/audit-remediation`
+## Unreleased
+
+Follow-up to the 2026-10-29 senior-engineer review (browser smoke test of the live storefront at 375, 768 and 1280 px).
+
+### Fixed
+- The category nav forced every page wider than the viewport on phones and tablets (horizontal scroll; at 375 px the cart button was pushed off-screen). The nav now shrinks inside the navbar row and scrolls sideways on its own (`components/main-nav.tsx`).
+- Gallery thumbnails were unlabeled icon-only buttons; each now has an accessible name ("Image 2 of 3") and the main image has a descriptive `alt`.
+- The home and category pages had no `h1`; the billboard label is now the page heading.
+
+### Added
+- `docs/screenshots/` and a README section with four captures of the production build.
+- README known limitation: missing records render the 404 page with status 200 because of the shared `loading.tsx` streaming boundary (verified; UX trade-off left open).
+
+## 2026-10-29 — PR #3 (`fix/audit-remediation`)
 
 Follow-up to the 2026-10-29 cross-repository review (QuickCart + EcommerceCloud).
 
