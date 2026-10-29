@@ -1,6 +1,6 @@
 # QuickCart — Engineering Audit
 
-**Date:** 2026-10-28
+**Date:** 2026-10-28 · **Status:** point-in-time record. The findings below were addressed in PRs #1 and #2 (merged 2026-10-28, see `docs/ENGINEERING_REVIEW.md`) and the follow-up remediation of 2026-10-29 (query-parameter normalisation, response-shape guards, error boundaries, order-received idempotency). Statements such as "uncommitted" or "never executed" describe the tree on 2026-10-28, not today.
 **Repository:** `C:\Users\shraddha\Desktop\TEST\TEST\QuickCart` → <https://github.com/Shrasingh/QuickCart> (public, default branch `main`)
 **Scope:** read-only inspection of the working tree, git history, remote, CI config, the live deployment, and the sibling admin API (`../EcommerceCloud`) that QuickCart depends on.
 

@@ -1,6 +1,6 @@
 # QuickCart — Git Workflow and Contributor Attribution
 
-Investigated 2026-10-28 against the local clone at `C:\Users\shraddha\Desktop\TEST\TEST\QuickCart` and the public GitHub API for `Shrasingh/QuickCart`. Facts are marked **verified**; everything else is marked as inference or recommendation.
+Investigated 2026-10-28 (updated 2026-10-29) against the local clone and the public GitHub API for `Shrasingh/QuickCart`. Facts are marked **verified**; everything else is marked as inference or recommendation. Sections 2 to 6 are the standing rules for this repository; section 1 is the dated record that motivated them.
 
 ---
 
@@ -13,8 +13,8 @@ Investigated 2026-10-28 against the local clone at `C:\Users\shraddha\Desktop\TE
 | GitHub repository | <https://github.com/Shrasingh/QuickCart> — owner `Shrasingh`, public, not a fork |
 | Default branch | `main`, **not protected** |
 | Local remote | `origin` → `https://github.com/Shrasingh/QuickCart.git` (fetch and push) |
-| Local branches | `main` (identical to `origin/main`), `backup-before-removing-claude` (local only, never pushed) |
-| Remote branches | `main` only |
+| Local branches (2026-10-28) | `main`, `backup-before-removing-claude` (local only, never pushed); feature branches are created per change and deleted after merge |
+| Remote branches | `main` plus short-lived feature branches while their PR is open |
 
 ### 1.2 Who authored what (verified via `git log` and the GitHub commits API)
 
@@ -56,9 +56,9 @@ No credentials or tokens are stored in either config (checked: no `credential.*`
 - Authored the two scaffold commits in May/June 2024 under his own account `shivang-tripati`; attribution is correct and must stay.
 - Whether he is currently a collaborator on the repository could not be read (the collaborators endpoint needs authentication). He has made no commits since 2024-06-06. **Inference:** the project has been solo since then.
 
-### 1.6 Uncommitted work (verified)
+### 1.6 Later history (verified 2026-10-29)
 
-The working tree contains changes from a previous session (tests, CI workflow, `lib/filters.ts`, README) and from this session (see `docs/ENGINEERING_REVIEW.md`). None of it is committed, so none of it has an author yet. When committed inside this repo it will be authored as `Shraddha Singh <shra192002@gmail.com>`.
+The production-hardening work described in `docs/ENGINEERING_REVIEW.md` was committed on the branch `chore/quickcart-production-hardening` and merged into `main` through pull requests #1 and #2 on 2026-10-28, authored as `Shraddha Singh <shra192002@gmail.com>` with no AI trailers. `backup-before-removing-claude` remains a local-only branch (see §4).
 
 ---
 
@@ -142,63 +142,7 @@ Do not use `--author="Shivang Tripathi <…>"` or amend commits to carry his nam
 
 ---
 
-## 5. Proposed commit plan for the current working tree (awaiting your approval)
-
-Everything below is **proposed**; nothing has been committed or pushed. The plan uses a feature branch and a pull request so the new CI workflow and (once enabled) branch protection are exercised on their first use.
-
-Each commit keeps every test next to the code it imports, so lint, typecheck and `npm test` pass at every step (checked against the import graph; the commits themselves have not been created).
-
-```bash
-cd C:\Users\shraddha\Desktop\TEST\TEST\QuickCart
-git config user.name && git config user.email      # must print Shraddha Singh / shra192002@gmail.com; if not, STOP
-git switch -c chore/production-readiness
-
-# 1 - test runner, cart store tests, CI workflow, PR template (previous session + vitest 5 upgrade)
-git add package.json package-lock.json vitest.config.mts tests/setup.ts tests/use-cart.test.ts .github/
-git commit -m "Add Vitest, cart store tests and a CI workflow (lint, typecheck, test, build)"
-
-# 2 - pure filter/search helpers with their tests (previous session)
-git add lib/filters.ts tests/filters.test.ts components/price-filter.tsx components/search-bar.tsx "app/(routes)/category/[categoryId]/components/filter.tsx"
-git commit -m "Extract URL filter and search logic into lib/filters.ts with unit tests"
-
-# 3 - shared API client with timeout and clear misconfiguration error
-git add lib/api.ts tests/api.test.ts tests/get-products.test.ts actions/
-git commit -m "Route catalog fetches through a shared client with a 10s timeout and diagnostics"
-
-# 4 - checkout hardening
-git add lib/cart.ts lib/checkout.ts tests/cart.test.ts tests/checkout.test.ts "app/(routes)/cart/components/summary.tsx"
-git commit -m "Harden checkout: block double submission, surface server errors, exact totals"
-
-# 5 - page data fetching and related products
-git add "app/(routes)/category/[categoryId]/page.tsx" "app/(routes)/products/page.tsx" "app/(routes)/product/[productId]/page.tsx"
-git commit -m "Fetch page data in parallel; exclude current product from related list"
-
-# 6 - accessibility and the missing placeholder image
-git add public/placeholder.svg components/ui/icon-button.tsx components/ui/product-card.tsx components/ui/modal.tsx components/navbar-actions.tsx "app/(routes)/cart/cart-item.tsx" "app/(routes)/category/[categoryId]/components/mobile-filters.tsx"
-git commit -m "Add missing placeholder image; label icon buttons; keyboard-operable product cards"
-
-# 7 - hydration hook replaces isMounted effects; lint override removed.
-#     orders/page.tsx also carries the earlier "Processing" status label (same file, kept together)
-git add hooks/use-hydrated.ts components/ui/currency.tsx "app/(routes)/cart/page.tsx" "app/(routes)/orders/page.tsx" providers/modal-provider.tsx eslint.config.mjs
-git commit -m "Replace isMounted effects with a useSyncExternalStore hydration hook"
-
-# 8 - order-received wording (previous session)
-git add "app/(routes)/order-success/order-success-content.tsx"
-git commit -m "Describe a completed checkout as received, not confirmed"
-
-# 9 - documentation
-git add README.md .env.example docs/
-git commit -m "Rewrite README; add engineering audit, deployment workflow and git attribution docs"
-
-git status --porcelain                                      # must be empty
-git log --format="%h | %an <%ae> | %s" origin/main..HEAD    # every line: Shraddha Singh <shra192002@gmail.com>
-git push -u origin chore/production-readiness
-# then open a PR on GitHub, watch CI, review the Vercel preview, merge.
-```
-
-Adjust the grouping as you like; the important properties are that each commit builds and tests on its own and that the author is `Shraddha Singh <shra192002@gmail.com>` with no AI trailers.
-
-## 6. Branch and pull-request conventions
+## 5. Branch and pull-request conventions
 
 - `main` is the only long-lived branch and is what Vercel deploys to production. Never commit to it directly once branch protection is enabled (see `docs/DEPLOYMENT_WORKFLOW.md`).
 - Branch names: `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>`. Short, lowercase, hyphenated.
@@ -208,7 +152,7 @@ Adjust the grouping as you like; the important properties are that each commit b
 - Merge with "Squash and merge" or "Create a merge commit"; never rebase-merge a shared branch after others have pulled it. Delete the branch after merging.
 - Never `git push --force` to `main`. If a branch needs history cleanup before review, use `git push --force-with-lease` on that feature branch only, and only before anyone else has based work on it.
 
-## 7. Verifying attribution on GitHub
+## 6. Verifying attribution on GitHub
 
 After pushing, confirm the commit landed under the right account:
 
